@@ -1,0 +1,143 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-sans/latin-700.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-400.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-500.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-600.css";
+@import "@fontsource/ibm-plex-sans/latin-ext-700.css";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-report: Arial, Helvetica, "Nimbus Sans", sans-serif;
+
+  --color-bg: #f3f1ec;
+  --color-fg: #171412;
+  --color-muted: #6b6560;
+  --color-subtle: #8a837b;
+  --color-surface: #fffcf7;
+  --color-surface-2: #ebe6dc;
+  --color-ink: #171412;
+  --color-ink-2: #2c2825;
+  --color-border: #d8d1c6;
+  --color-primary: #b42318;
+  --color-primary-hover: #96190f;
+  --color-primary-fg: #fffaf7;
+  --color-wa: #128c7e;
+  --color-wa-hover: #0e7368;
+  --color-history: #1d4f91;
+  --color-history-hover: #163e73;
+  --color-paper: #ffffff;
+  --color-dash: #7a746c;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  --shadow-card:
+    0 0 0 1px rgba(23, 20, 18, 0.06),
+    0 1px 2px -1px rgba(23, 20, 18, 0.06),
+    0 8px 24px -12px rgba(23, 20, 18, 0.12);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-tap-highlight-color: rgb(23 20 18 / 0.08);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.rich-note {
+  min-height: 2.4rem;
+  outline: none;
+  word-break: break-word;
+  font-family: inherit;
+  color: inherit;
+  font-size: inherit;
+}
+
+.rich-note:empty::before {
+  content: attr(data-placeholder);
+  color: #9a938a;
+  pointer-events: none;
+}
+
+.report-page {
+  font-family: var(--font-report);
+  background: #ffffff;
+  color: #111111;
+}
+
+.report-box {
+  border: 1px dashed #6f6f6f;
+  padding: 6px 8px;
+  min-height: 1.7rem;
+  background: #ffffff;
+}
+
+.report-line {
+  border-bottom: 1px solid #d0d0d0;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .report-print {
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+}
+
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior-y: contain;
+  }
+}
