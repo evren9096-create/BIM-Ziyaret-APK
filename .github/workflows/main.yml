@@ -27,7 +27,7 @@ jobs:
 
       - name: Android projesini oluştur
         run: |
-          npx cap init "BIM Ziyaret" "com.evren.bimziyaret" --web-dir dist
+          npx cap init "BIM Ziyaret" "com.evren.bimziyaret" --web-dir .vercel/output/static
           npx cap add android
           npx cap sync android
 
