@@ -1,0 +1,50 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Projeyi kur
+        run: npm install
+
+      - name: Web uygulamasını oluştur
+        run: npm run build
+
+      - name: Capacitor kur
+        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 --no-save
+
+      - name: Android projesini oluştur
+        run: |
+          npx cap init "BIM Ziyaret" "com.evren.bimziyaret" --web-dir dist
+          npx cap add android
+          npx cap sync android
+
+      - name: Java kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: APK oluştur
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: APK'yı yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: BIM-Ziyaret-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
