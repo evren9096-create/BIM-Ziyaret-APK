@@ -20,7 +20,7 @@ jobs:
         run: npm install
 
       - name: Web uygulamasını oluştur
-        run: npm run build
+        run: npm run build:dev
 
       - name: Capacitor kur
         run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 --no-save
