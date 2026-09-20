@@ -169,6 +169,9 @@ export default defineConfig(({ command, isPreview }) => ({
     tanstackStart({
   spa: {
     enabled: true,
+        prerender: {
+      outputPath: '/index.html',
+    },
   },
 }),
     ...(command === "build" || isPreview
