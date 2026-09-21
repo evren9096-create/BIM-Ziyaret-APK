@@ -19,8 +19,8 @@ jobs:
       - name: Projeyi kur
         run: npm install
 
-      - name: Capacitor eklentilerini kur
-        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/share@7 @capacitor/filesystem@7 @capacitor/app@7 --no-save
+      - name: Capacitor ve eklentileri kur
+        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/app@7 @capacitor/share@7 @capacitor/filesystem@7 --no-save
 
       - name: Web uygulamasını oluştur
         run: npm run build:dev
@@ -30,6 +30,13 @@ jobs:
           npx cap init "BIM Ziyaret" "com.evren.bimziyaret" --web-dir .vercel/output/static
           npx cap add android
           npx cap sync android
+
+      - name: Uygulama ikonunu oluştur
+        run: |
+          mkdir -p assets
+          cp V16-BIM-Ziyaret-icon.png assets/icon-only.png
+          npm install @capacitor/assets@3.0.5 --no-save
+          npx capacitor-assets generate --android
 
       - name: Java kur
         uses: actions/setup-java@v4
