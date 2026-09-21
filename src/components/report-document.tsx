@@ -22,6 +22,8 @@ type Props = {
   onAddPhoto?: (itemId: string) => void;
   onRemovePhoto?: (itemId: string, photoId: string) => void;
   onRemoveItem?: (itemId: string) => void;
+  onAddGenelPhoto?: () => void;
+  onRemoveGenelPhoto?: (photoId: string) => void;
 };
 
 export function ReportDocument({
@@ -36,6 +38,8 @@ export function ReportDocument({
   onAddPhoto,
   onRemovePhoto,
   onRemoveItem,
+  onAddGenelPhoto,
+  onRemoveGenelPhoto,
 }: Props) {
   const noteStyle = {
     fontFamily: visit.noteFont || DEFAULT_NOTE_FONT,
@@ -57,7 +61,6 @@ export function ReportDocument({
         {store.name}
       </h1>
       <div className="report-line mb-3" />
-
       <h2 className="report-box mb-3 inline-block text-[14px] font-bold underline decoration-1 underline-offset-2">
         MAĞAZA KONTROL
       </h2>
@@ -106,6 +109,7 @@ export function ReportDocument({
                     </button>
                   )}
                 </div>
+
                 {item.photos.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {item.photos.map((p) => (
@@ -132,6 +136,7 @@ export function ReportDocument({
                     ))}
                   </div>
                 )}
+
                 {editable && (
                   <button
                     type="button"
@@ -147,6 +152,7 @@ export function ReportDocument({
                   </button>
                 )}
               </div>
+
               <div className="min-w-0">
                 {editable ? (
                   <RichNote
@@ -159,7 +165,9 @@ export function ReportDocument({
                     typingSize={visit.noteSize || DEFAULT_NOTE_SIZE}
                     typingColor={visit.noteColor || DEFAULT_NOTE_COLOR}
                     onFocus={() => onFocusItem?.(item.id)}
-                    onChange={(html) => onChangeItem?.(item.id, { noteHtml: html })}
+                    onChange={(html) =>
+                      onChangeItem?.(item.id, { noteHtml: html })
+                    }
                   />
                 ) : (
                   <div
@@ -197,9 +205,7 @@ export function ReportDocument({
           <div
             className="report-box min-h-24 text-[13px] leading-relaxed"
             style={noteStyle}
-            dangerouslySetInnerHTML={{
-              __html: visit.kontrolNoktasiHtml || "",
-            }}
+            dangerouslySetInnerHTML={{ __html: visit.kontrolNoktasiHtml || "" }}
           />
         )}
       </div>
@@ -228,6 +234,41 @@ export function ReportDocument({
             dangerouslySetInnerHTML={{ __html: visit.genelHtml || "" }}
           />
         )}
+
+        {(visit.genelPhotos?.length ?? 0) > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(visit.genelPhotos ?? []).map((p) => (
+              <div key={p.id} className="relative">
+                <img
+                  src={p.dataUrl}
+                  alt=""
+                  className="h-32 w-auto max-w-full rounded-sm object-cover outline outline-1 -outline-offset-1 outline-black/15"
+                />
+                {editable && (
+                  <button
+                    type="button"
+                    className="absolute right-1 top-1 inline-flex size-7 items-center justify-center rounded-full bg-ink/80 text-primary-fg"
+                    aria-label="Genel fotoğrafı sil"
+                    onClick={() => onRemoveGenelPhoto?.(p.id)}
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {editable && (
+          <button
+            type="button"
+            className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-md border border-dashed border-black/20 px-3 text-[11px] font-medium text-muted hover:bg-surface-2 hover:text-fg"
+            onClick={onAddGenelPhoto}
+          >
+            <Camera className="size-4" />
+            GENEL fotoğrafı ekle
+          </button>
+        )}
       </div>
 
       <p className="mt-8 text-center text-[12px] tracking-wide text-[#b0aaa3]">
@@ -245,7 +286,7 @@ function htmlToPlain(html: string): string {
 
 function escapeToHtml(text: string): string {
   return text
-    .replaceAll("&", "&")
-    .replaceAll("<", "<")
-    .replaceAll(">", ">");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
