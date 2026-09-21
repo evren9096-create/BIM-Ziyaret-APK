@@ -1,4 +1,7 @@
 import { toPng } from "html-to-image";
+import { Share } from "@capacitor/share";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Capacitor } from "@capacitor/core";
 import { fileSafeName } from "./utils";
 import { formatVisitStamp } from "./dates";
 
@@ -23,16 +26,58 @@ export function visitShareName(storeName: string, createdAt: number): string {
   return `${fileSafeName(storeName)}_${stamp}`;
 }
 
+async function blobToBase64(blob: Blob): Promise<string> {
+  const buffer = await blob.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+async function nativeShare(opts: {
+  blob: Blob;
+  filename: string;
+  title: string;
+  text: string;
+}): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+
+  const base64 = await blobToBase64(opts.blob);
+  const saved = await Filesystem.writeFile({
+    path: `share/${opts.filename}`,
+    data: base64,
+    directory: Directory.Cache,
+    recursive: true,
+  });
+
+  await Share.share({
+    title: opts.title,
+    text: opts.text,
+    files: [saved.uri],
+    dialogTitle: "WhatsApp ile paylaş",
+  });
+
+  return true;
+}
+
 export async function shareOrDownload(opts: {
   blob: Blob;
   filename: string;
   title: string;
   text: string;
 }): Promise<"shared" | "downloaded"> {
+  try {
+    if (await nativeShare(opts)) return "shared";
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") return "shared";
+  }
+
   const file = new File([opts.blob], opts.filename, {
     type: opts.blob.type || "image/png",
   });
-
   try {
     if (typeof navigator.share === "function") {
       const data = { title: opts.title, text: opts.text, files: [file] };
@@ -43,9 +88,7 @@ export async function shareOrDownload(opts: {
       }
     }
   } catch (err) {
-    if (err instanceof DOMException && err.name === "AbortError") {
-      return "shared";
-    }
+    if (err instanceof DOMException && err.name === "AbortError") return "shared";
   }
 
   const url = URL.createObjectURL(opts.blob);
