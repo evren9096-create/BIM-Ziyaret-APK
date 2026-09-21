@@ -19,6 +19,7 @@ export type Visit = {
   items: CheckItem[];
   kontrolNoktasiHtml: string;
   genelHtml: string;
+  genelPhotos?: Photo[];
   noteFont?: string;
   noteColor?: string;
   noteSize?: string;
