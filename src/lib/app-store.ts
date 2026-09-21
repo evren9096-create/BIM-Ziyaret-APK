@@ -27,6 +27,8 @@ type AppState = {
   removeItem: (visitId: string, itemId: string) => void;
   addPhoto: (visitId: string, itemId: string, dataUrl: string) => void;
   removePhoto: (visitId: string, itemId: string, photoId: string) => void;
+  addGenelPhoto: (visitId: string, dataUrl: string) => void;
+  removeGenelPhoto: (visitId: string, photoId: string) => void;
   deleteVisit: (id: string) => void;
 };
 
@@ -45,6 +47,10 @@ function cloneItems(items: CheckItem[]): CheckItem[] {
     id: uid(),
     photos: item.photos.map((p) => ({ ...p, id: uid() })),
   }));
+}
+
+function clonePhotos(photos: Photo[] | undefined): Photo[] {
+  return (photos ?? []).map((p) => ({ ...p, id: uid() }));
 }
 
 export const useAppStore = create<AppState>()(
@@ -137,6 +143,7 @@ export const useAppStore = create<AppState>()(
           .sort((a, b) => b.number - a.number);
         const number = (existing[0]?.number ?? 0) + 1;
         const now = Date.now();
+
         const visit: Visit = {
           id: uid(),
           storeId,
@@ -146,10 +153,15 @@ export const useAppStore = create<AppState>()(
           items: source ? cloneItems(source.items) : blankItems(get().template),
           kontrolNoktasiHtml: source?.kontrolNoktasiHtml ?? "",
           genelHtml: source?.genelHtml ?? "",
+          genelPhotos: [],
           noteFont: source?.noteFont ?? "Arial",
           noteColor: source?.noteColor ?? "#111111",
           noteSize: source?.noteSize ?? "3",
         };
+
+        // Keep this spelling isolated to make old stored data harmless.
+        visit.genelPhotos = clonePhotos(source?.genelPhotos);
+
         set({ visits: [...get().visits, visit] });
         return visit;
       },
@@ -237,6 +249,35 @@ export const useAppStore = create<AppState>()(
               ),
             };
           }),
+        });
+      },
+
+      addGenelPhoto: (visitId, dataUrl) => {
+        const photo: Photo = { id: uid(), dataUrl };
+        set({
+          visits: get().visits.map((v) =>
+            v.id === visitId
+              ? {
+                  ...v,
+                  updatedAt: Date.now(),
+                  genelPhotos: [...(v.genelPhotos ?? []), photo],
+                }
+              : v,
+          ),
+        });
+      },
+
+      removeGenelPhoto: (visitId, photoId) => {
+        set({
+          visits: get().visits.map((v) =>
+            v.id === visitId
+              ? {
+                  ...v,
+                  updatedAt: Date.now(),
+                  genelPhotos: (v.genelPhotos ?? []).filter((p) => p.id !== photoId),
+                }
+              : v,
+          ),
         });
       },
 
