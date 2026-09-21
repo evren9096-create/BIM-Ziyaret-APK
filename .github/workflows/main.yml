@@ -20,7 +20,7 @@ jobs:
         run: npm install
 
       - name: Capacitor eklentilerini kur
-        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/share@7 @capacitor/filesystem@7 --no-save
+        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/share@7 @capacitor/filesystem@7 @capacitor/app@7 --no-save
 
       - name: Web uygulamasını oluştur
         run: npm run build:dev
