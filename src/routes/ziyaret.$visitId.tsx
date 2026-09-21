@@ -9,6 +9,7 @@ import {
   Plus,
   Save,
   Share2,
+  CalendarClock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -37,6 +38,12 @@ import type { Store, Visit } from "@/lib/types";
 export const Route = createFileRoute("/ziyaret/$visitId")({
   component: VisitEditor,
 });
+
+function toLocalDateTimeValue(ts: number): string {
+  const d = new Date(ts);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function VisitEditor() {
   const { visitId } = Route.useParams();
@@ -67,6 +74,8 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
   const removeItem = useAppStore((s) => s.removeItem);
   const addPhoto = useAppStore((s) => s.addPhoto);
   const removePhoto = useAppStore((s) => s.removePhoto);
+  const addGenelPhoto = useAppStore((s) => s.addGenelPhoto);
+  const removeGenelPhoto = useAppStore((s) => s.removeGenelPhoto);
   const createVisit = useAppStore((s) => s.createVisit);
 
   const [focusedItemId, setFocusedItemId] = useState<string | null>(
@@ -75,9 +84,14 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
   const [itemDialog, setItemDialog] = useState(false);
   const [itemLabel, setItemLabel] = useState("");
   const [sharing, setSharing] = useState(false);
+  const [dateDialog, setDateDialog] = useState(false);
+  const [dateValue, setDateValue] = useState(() =>
+    toLocalDateTimeValue(visit.createdAt),
+  );
   const fileRef = useRef<HTMLInputElement>(null);
   const captureRef = useRef<HTMLDivElement>(null);
   const pendingPhotoItem = useRef<string | null>(null);
+  const pendingGeneralPhoto = useRef(false);
 
   const noteFont = visit.noteFont || DEFAULT_NOTE_FONT;
   const noteColor = visit.noteColor || DEFAULT_NOTE_COLOR;
@@ -89,7 +103,24 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
     }
   }, [visit.items, focusedItemId]);
 
+  function openDateDialog() {
+    setDateValue(toLocalDateTimeValue(visit.createdAt));
+    setDateDialog(true);
+  }
+
+  function saveDate() {
+    const ms = new Date(dateValue).getTime();
+    if (!Number.isFinite(ms)) {
+      toast.error("Geçerli bir tarih ve saat seçin");
+      return;
+    }
+    updateVisit(visit.id, { createdAt: ms });
+    setDateDialog(false);
+    toast.success("Ziyaret tarihi ve saati güncellendi");
+  }
+
   function pickPhoto(itemId: string | null) {
+    pendingGeneralPhoto.current = false;
     pendingPhotoItem.current = itemId ?? focusedItemId;
     if (!pendingPhotoItem.current) {
       toast.message("Önce bir maddeye dokunun");
@@ -98,18 +129,31 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
     fileRef.current?.click();
   }
 
+  function pickGeneralPhoto() {
+    pendingGeneralPhoto.current = true;
+    pendingPhotoItem.current = null;
+    fileRef.current?.click();
+  }
+
   async function onFiles(files: FileList | null) {
-    const itemId = pendingPhotoItem.current ?? focusedItemId;
-    if (!itemId || !files?.length) return;
+    if (!files?.length) return;
     try {
       for (const file of Array.from(files)) {
         if (!file.type.startsWith("image/")) continue;
         const dataUrl = await compressImageFile(file);
-        addPhoto(visit.id, itemId, dataUrl);
+        if (pendingGeneralPhoto.current) {
+          addGenelPhoto(visit.id, dataUrl);
+        } else {
+          const itemId = pendingPhotoItem.current ?? focusedItemId;
+          if (itemId) addPhoto(visit.id, itemId, dataUrl);
+        }
       }
       toast.success("Fotoğraf eklendi");
     } catch {
       toast.error("Fotoğraf eklenemedi");
+    } finally {
+      pendingGeneralPhoto.current = false;
+      pendingPhotoItem.current = null;
     }
   }
 
@@ -164,32 +208,29 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
 
   return (
     <div className="min-h-dvh bg-bg">
-      <header className="no-print sticky top-0 z-30 border-b border-white/10 bg-ink text-primary-fg" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="mx-auto flex max-w-4xl items-center gap-1 px-2 py-0.5">
+      <header
+        className="no-print sticky top-0 z-30 border-b border-white/10 bg-ink text-primary-fg shadow-md"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
+        <div className="mx-auto flex max-w-4xl items-center gap-2 px-3 py-2">
           <Link
             to="/magaza/$storeId"
             params={{ storeId: store.id }}
-            className="inline-flex h-6 items-center gap-0.5 rounded px-1 text-[10px] font-medium text-white/80 hover:bg-white/10 hover:text-white"
+            className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-medium text-white/85 hover:bg-white/10 hover:text-white"
           >
-            <ChevronLeft className="size-3" />
+            <ChevronLeft className="size-4" />
             Mağazalar
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-semibold tracking-wide">
-              {store.name}
-            </p>
-            <p className="truncate text-[9px] text-white/55 tabular-nums">
+            <p className="truncate text-xs font-semibold tracking-wide">{store.name}</p>
+            <p className="truncate text-[10px] text-white/60 tabular-nums">
               {visit.number}. ziyaret · {formatVisitStamp(visit.createdAt)}
             </p>
           </div>
         </div>
 
-        <div className="mx-auto flex max-w-4xl flex-wrap gap-0.5 px-2 pb-0.5">
-          <Button
-            variant="default"
-            size="compact"
-            onClick={copyVisit}
-          >
+        <div className="mx-auto flex max-w-4xl flex-wrap gap-1 px-3 pb-2">
+          <Button variant="default" size="compact" onClick={copyVisit}>
             <Copy />
             Kopyala
           </Button>
@@ -219,6 +260,15 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
           >
             <Camera />
             Fotoğraf
+          </Button>
+          <Button
+            variant="secondary"
+            size="compact"
+            className="bg-white/10 text-white hover:bg-white/15"
+            onClick={openDateDialog}
+          >
+            <CalendarClock />
+            Tarih
           </Button>
           <Button
             variant="history"
@@ -252,7 +302,7 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
           </Button>
         </div>
 
-        <div className="mx-auto max-w-4xl px-2 pb-1">
+        <div className="mx-auto max-w-4xl px-3 pb-2">
           <FormatBar
             compact
             font={noteFont}
@@ -293,6 +343,8 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
               removePhoto(visit.id, itemId, photoId)
             }
             onRemoveItem={(itemId) => removeItem(visit.id, itemId)}
+            onAddGenelPhoto={pickGeneralPhoto}
+            onRemoveGenelPhoto={(photoId) => removeGenelPhoto(visit.id, photoId)}
           />
         </div>
       </div>
@@ -329,6 +381,30 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
             </Button>
             <Button variant="ink" onClick={submitItem}>
               Ekle
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dateDialog} onOpenChange={setDateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ziyaret tarih ve saati</DialogTitle>
+            <DialogDescription>
+              Otomatik gelen tarih ve saati istediğin zaman değiştirebilirsin.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            type="datetime-local"
+            value={dateValue}
+            onChange={(e) => setDateValue(e.target.value)}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDateDialog(false)}>
+              Vazgeç
+            </Button>
+            <Button variant="ink" onClick={saveDate}>
+              Kaydet
             </Button>
           </DialogFooter>
         </DialogContent>
