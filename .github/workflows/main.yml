@@ -23,8 +23,7 @@ jobs:
         run: npm run build:dev
 
       - name: Capacitor kur
-        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 --no-save
-
+        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/app@7 --no-save
       - name: Android projesini oluştur
         run: |
           npx cap init "BIM Ziyaret" "com.evren.bimziyaret" --web-dir .vercel/output/static
@@ -42,7 +41,6 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
-
       - name: APK'yı yükle
         uses: actions/upload-artifact@v4
         with:
