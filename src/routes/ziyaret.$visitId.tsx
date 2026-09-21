@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { App } from "@capacitor/app";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Camera,
@@ -102,6 +103,31 @@ function VisitEditorBody({ visit, store }: { visit: Visit; store: Store }) {
       setFocusedItemId(visit.items[0].id);
     }
   }, [visit.items, focusedItemId]);
+
+  useEffect(() => {
+    let handle: { remove: () => Promise<void> } | undefined;
+    let active = true;
+
+    void App.addListener("backButton", ({ canGoBack }) => {
+      if (!active) return;
+      if (canGoBack) {
+        window.history.back();
+      } else {
+        void navigate({
+          to: "/magaza/$storeId",
+          params: { storeId: store.id },
+        });
+      }
+    }).then((listener) => {
+      handle = listener;
+    });
+
+    return () => {
+      active = false;
+      void handle?.remove();
+    };
+  }, [navigate, store.id]);
+
 
   function openDateDialog() {
     setDateValue(toLocalDateTimeValue(visit.createdAt));
