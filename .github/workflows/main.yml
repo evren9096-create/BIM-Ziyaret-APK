@@ -30,7 +30,7 @@ jobs:
           npx cap init "BIM Ziyaret" "com.evren.bimziyaret" --web-dir .vercel/output/static
           npx cap add android
           npx cap sync android
-
+          python3 -c 'from pathlib import Path; p=Path("android/app/src/main/java/com/evren/bimziyaret/MainActivity.java"); s=p.read_text(); s=s.replace("public class MainActivity extends BridgeActivity {","public class MainActivity extends BridgeActivity {\n  @Override\n  public void onSaveInstanceState(android.os.Bundle outState) {\n    super.onSaveInstanceState(outState);\n    outState.clear();\n  }"); p.write_text(s)'
       - name: Uygulama ikonunu oluştur
         run: |
           mkdir -p assets
