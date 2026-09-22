@@ -1,5 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { FileSharer } from "@capgo/capacitor-file-sharer";
+import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { toPng } from "html-to-image";
 import { fileSafeName } from "./utils";
 import { formatVisitStamp } from "./dates";
