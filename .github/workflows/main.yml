@@ -19,8 +19,8 @@ jobs:
       - name: Projeyi kur
         run: npm install
 
-      - name: Capacitor ve eklentileri kur
-        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/app@7 @capacitor/share@7 @capacitor/filesystem@7 --no-save
+      - name: Capacitor paketlerini kur
+        run: npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/app@7 @capacitor/share@7 @capacitor/filesystem@7 @capacitor/assets@3.0.5 --no-save
 
       - name: Web uygulamasını oluştur
         run: npm run build:dev
@@ -35,7 +35,6 @@ jobs:
         run: |
           mkdir -p assets
           cp V16-BIM-Ziyaret-icon.png assets/icon-only.png
-          npm install @capacitor/assets@3.0.5 --no-save
           npx capacitor-assets generate --android
 
       - name: Java kur
