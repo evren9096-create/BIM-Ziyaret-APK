@@ -1,6 +1,5 @@
 import { Capacitor } from "@capacitor/core";
-import { Share } from "@capacitor/share";
-import { Directory, Filesystem } from "@capacitor/filesystem";
+import { FileSharer } from "@byteowls/capacitor-filesharer";
 import { toPng } from "html-to-image";
 import { fileSafeName } from "./utils";
 import { formatVisitStamp } from "./dates";
@@ -58,32 +57,20 @@ export async function shareOrDownload(opts: {
 }): Promise<"shared" | "downloaded"> {
 
   if (Capacitor.isNativePlatform()) {
-  try {
-    const base64 = await blobToBase64(opts.blob);
+    try {
+      const base64 = await blobToBase64(opts.blob);
 
-    await Filesystem.writeFile({
-      path: opts.filename,
-      data: base64,
-      directory: Directory.Cache,
-    });
+      await FileSharer.share({
+        filename: opts.filename,
+        contentType: "image/png",
+        base64Data: base64,
+      });
 
-    const uriResult = await Filesystem.getUri({
-      path: opts.filename,
-      directory: Directory.Cache,
-    });
-
-    await Share.share({
-      title: opts.title,
-      text: opts.text,
-      files: [uriResult.uri],
-      dialogTitle: "WhatsApp veya başka bir uygulamayla paylaş",
-    });
-
-    return "shared";
-  } catch (err) {
-    console.error("Native file share failed", err);
+      return "shared";
+    } catch (err) {
+      console.error("Native file share failed", err);
+    }
   }
-}
 
   const file = new File([opts.blob], opts.filename, {
     type: opts.blob.type || "image/png",
@@ -129,4 +116,3 @@ export async function shareOrDownload(opts: {
 
   return "downloaded";
 }
-
