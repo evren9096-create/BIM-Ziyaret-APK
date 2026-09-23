@@ -31,7 +31,7 @@ export function visitShareName(
     .replaceAll(" ", "_")
     .replaceAll(":", "");
 
-  return fileSafeName(storeName) + "_" + stamp;
+  return fileSafeName(storeName) + "_" + stamp + ".png";
 }
 
 async function blobToBase64(blob: Blob): Promise<string> {
