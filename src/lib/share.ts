@@ -67,8 +67,16 @@ export async function shareOrDownload(opts: {
       });
 
       return "shared";
-    } catch (err) {
+} catch (err) {
       console.error("Native file share failed", err);
+
+      const message =
+        err instanceof Error ? err.message : String(err);
+
+      window.alert(
+        "WhatsApp paylaşım hatası:\n\n" +
+        message
+      );
     }
   }
 
