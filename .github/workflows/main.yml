@@ -34,6 +34,7 @@ jobs:
       - name: Uygulama ikonunu oluştur
         run: |
           mkdir -p assets
+          cp V16-BIM-Ziyaret-icon.png assets/icon.png
           cp V16-BIM-Ziyaret-icon.png assets/icon-only.png
           npx capacitor-assets generate --android
 
