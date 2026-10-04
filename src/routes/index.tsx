@@ -348,6 +348,77 @@ function openCalendarCell(storeId: string, date: string) {
 
 
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(o) => !o && setDeleteTarget(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Mağaza silinsin mi?</AlertDialogTitle><AlertDialogDescription>{deleteTarget?.name} ve bu mağazaya ait tüm ziyaret raporları kalıcı olarak silinir.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Vazgeç</AlertDialogCancel><AlertDialogAction onClick={() => { if (deleteTarget) { deleteStore(deleteTarget.id); toast.success("Mağaza silindi"); } setDeleteTarget(null); }}>Sil</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <Dialog
+  open={Boolean(calendarCell)}
+  onOpenChange={(open) => {
+    if (!open) setCalendarCell(null);
+  }}
+>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Haftalık Plan</DialogTitle>
+      <DialogDescription>
+        Seçilen mağaza ve gün için kısa bir not yazabilirsiniz.
+      </DialogDescription>
+    </DialogHeader>
+
+    <Input
+      value={calendarNote}
+      onChange={(e) => setCalendarNote(e.target.value)}
+      placeholder="Örn. Sabah ziyaret"
+      autoFocus
+    />
+
+    <DialogFooter>
+      <Button
+        variant="outline"
+        onClick={() => setCalendarCell(null)}
+      >
+        Vazgeç
+      </Button>
+
+      <Button
+        variant="outline"
+        onClick={() => {
+          if (calendarCell) {
+            const plan = calendarPlans.find(
+              (p) =>
+                p.storeId === calendarCell.storeId &&
+                p.date === calendarCell.date,
+            );
+
+            if (plan) {
+              deleteCalendarPlan(plan.id);
+              toast.success("Plan silindi");
+            }
+          }
+
+          setCalendarCell(null);
+        }}
+      >
+        Sil
+      </Button>
+
+      <Button
+        variant="ink"
+        onClick={() => {
+          if (calendarCell) {
+            saveCalendarPlan(
+              calendarCell.storeId,
+              calendarCell.date,
+              calendarNote,
+            );
+            toast.success("Plan kaydedildi");
+          }
+
+          setCalendarCell(null);
+        }}
+      >
+        Kaydet
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
 
 
     </main>
