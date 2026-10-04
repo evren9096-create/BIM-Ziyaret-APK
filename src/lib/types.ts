@@ -36,3 +36,11 @@ export type TemplateItem = {
   id: string;
   label: string;
 };
+export type CalendarPlan = {
+  id: string;
+  storeId: string;
+  date: string;
+  note: string;
+  createdAt: number;
+  updatedAt: number;
+};
