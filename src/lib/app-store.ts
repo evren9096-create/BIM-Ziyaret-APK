@@ -3,13 +3,20 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "./idb";
 import { makeDefaultStores, makeDefaultTemplate } from "./defaults";
 import { uid, slugifyTr } from "./utils";
-import type { CheckItem, Photo, Store, TemplateItem, Visit } from "./types";
+import type { CalendarPlan, CheckItem, Photo, Store, TemplateItem, Visit } from "./types";
 
 type AppState = {
   stores: Store[];
   visits: Visit[];
   template: TemplateItem[];
+  calendarPlans: CalendarPlan[];
   hydrated: boolean;
+  saveCalendarPlan: (
+  storeId: string,
+  date: string,
+  note: string,
+) => CalendarPlan | null;
+deleteCalendarPlan: (id: string) => void;
   setHydrated: (v: boolean) => void;
   addStore: (name: string) => Store;
   renameStore: (id: string, name: string) => void;
@@ -59,8 +66,53 @@ export const useAppStore = create<AppState>()(
       stores: makeDefaultStores(),
       visits: [],
       template: makeDefaultTemplate(),
+      calendarPlans: [],
       hydrated: false,
       setHydrated: (v) => set({ hydrated: v }),
+      saveCalendarPlan: (storeId, date, note) => {
+  const existing = get().calendarPlans.find(
+    (p) => p.storeId === storeId && p.date === date,
+  );
+
+  if (existing) {
+    const updated = {
+      ...existing,
+      note: note.trim(),
+      updatedAt: Date.now(),
+    };
+
+    set({
+      calendarPlans: get().calendarPlans.map((p) =>
+        p.id === existing.id ? updated : p,
+      ),
+    });
+
+    return updated;
+  }
+
+  const now = Date.now();
+
+  const plan: CalendarPlan = {
+    id: uid(),
+    storeId,
+    date,
+    note: note.trim(),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  set({
+    calendarPlans: [...get().calendarPlans, plan],
+  });
+
+  return plan;
+},
+
+deleteCalendarPlan: (id) => {
+  set({
+    calendarPlans: get().calendarPlans.filter((p) => p.id !== id),
+  });
+},
 
       addStore: (raw) => {
         const name = raw.trim().toLocaleUpperCase("tr-TR");
@@ -90,6 +142,7 @@ export const useAppStore = create<AppState>()(
         set({
           stores: get().stores.filter((s) => s.id !== id),
           visits: get().visits.filter((v) => v.storeId !== id),
+          calendarPlans: get().calendarPlans.filter((p) => p.storeId !== id),
         });
       },
 
@@ -289,10 +342,11 @@ export const useAppStore = create<AppState>()(
       name: "bim-ziyaret-v1",
       storage: createJSONStorage(() => idbStorage),
       partialize: (s) => ({
-        stores: s.stores,
-        visits: s.visits,
-        template: s.template,
-      }),
+  stores: s.stores,
+  visits: s.visits,
+  template: s.template,
+  calendarPlans: s.calendarPlans,
+}),
       skipHydration: true,
       onRehydrateStorage: () => (_state, error) => {
         if (error) {
