@@ -118,7 +118,7 @@ const weekDays = useMemo(() => {
 
 const [calendarNote, setCalendarNote] = useState("");
   function dateKey(date: Date) {
-  return ${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")};
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 
@@ -144,7 +144,7 @@ const [calendarNote, setCalendarNote] = useState("");
           (item) => item.storeId === store.id && item.date === date,
         ) ?? null;
 
-      map.set(${store.id}_${date}, { visited, plan });
+      map.set(`${store.id}_${date}`, { visited, plan });
     });
   });
 
