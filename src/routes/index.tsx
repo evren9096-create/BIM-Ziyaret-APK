@@ -287,13 +287,13 @@ function openCalendarCell(storeId: string, date: string) {
 
         {weekDays.map((day) => {
           const date = dateKey(day);
-          const cell = calendarCells.get(${store.id}_${date});
+          const cell = calendarCells.get(`${store.id}_${date}`);
           const visited = cell?.visited ?? false;
           const planned = Boolean(cell?.plan);
 
           return (
             <button
-              key={${store.id}_${date}}
+              key={`${store.id}_${date}`}
               type="button"
               onClick={() => openCalendarCell(store.id, date)}
               className={`min-w-0 rounded-lg border p-1 text-center transition ${
