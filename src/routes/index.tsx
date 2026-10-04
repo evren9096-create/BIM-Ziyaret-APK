@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 
-import { BarChart3, CalendarDays, FileText, History, Pencil, Plus, Settings2, Store as StoreIcon, Trash2 } from "lucide-react";
+import { BarChart3, CalendarDays, ChevronLeft, ChevronRight, FileText, History, Pencil, Plus, Settings2, Store as StoreIcon, Trash2 } from "lucide-react";
 
 
 import { toast } from "sonner";
@@ -85,10 +85,79 @@ function Home() {
   const [renameValue, setRenameValue] = useState("");
 
 
-  const [deleteTarget, setDeleteTarget] = useState<Store | null>(null);
+  const calendarPlans = useAppStore((s) => s.calendarPlans);
+const saveCalendarPlan = useAppStore((s) => s.saveCalendarPlan);
+const deleteCalendarPlan = useAppStore((s) => s.deleteCalendarPlan);
+
+const [weekOffset, setWeekOffset] = useState(0);
+
+const weekStart = useMemo(() => {
+  const d = new Date();
+  d.setDate(d.getDate() + weekOffset * 7);
+
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+
+  return d;
+}, [weekOffset]);
+
+const weekDays = useMemo(() => {
+  return Array.from({ length: 7 }, (_, index) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + index);
+    return d;
+  });
+}, [weekStart]);
+  const [calendarCell, setCalendarCell] = useState<{
+  storeId: string;
+  date: string;
+} | null>(null);
+
+const [calendarNote, setCalendarNote] = useState("");
+  function dateKey(date: Date) {
+  return ${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")};
+}
 
 
   const ordered = useMemo(() => [...stores].sort((a, b) => a.order - b.order), [stores]);
+  const calendarCells = useMemo(() => {
+  const map = new Map<
+    string,
+    { visited: boolean; plan: (typeof calendarPlans)[number] | null }
+  >();
+
+  ordered.forEach((store) => {
+    weekDays.forEach((day) => {
+      const date = dateKey(day);
+
+      const visited = visits.some(
+        (visit) =>
+          visit.storeId === store.id &&
+          dateKey(new Date(visit.createdAt)) === date,
+      );
+
+      const plan =
+        calendarPlans.find(
+          (item) => item.storeId === store.id && item.date === date,
+        ) ?? null;
+
+      map.set(${store.id}_${date}, { visited, plan });
+    });
+  });
+
+  return map;
+}, [ordered, weekDays, visits, calendarPlans]);
+function openCalendarCell(storeId: string, date: string) {
+  const plan = calendarPlans.find(
+    (item) => item.storeId === storeId && item.date === date,
+  );
+
+  setCalendarCell({ storeId, date });
+  setCalendarNote(plan?.note ?? "");
+}
 
 
   const rows = useMemo(() => ordered.map((store) => {
@@ -134,6 +203,8 @@ function Home() {
 
 
       <header className="pt-2">
+    
+        
 
 
         <div className="flex items-center justify-between gap-3"><div><div className="inline-flex items-center gap-2"><span className="rounded-xl bg-[#e30613] px-3 py-1.5 text-lg font-black tracking-tight text-white">BİM</span><span className="text-lg font-bold text-fg">Ziyaret</span></div><h1 className="mt-4 text-2xl font-bold tracking-tight text-fg">Mağaza Seçimi</h1><p className="mt-1 text-sm text-muted">Ziyaret etmek istediğiniz mağazayı seçin</p></div><Button variant="outline" size="icon" aria-label="Ayarlar" onClick={() => navigate({ to: "/sablon" })}><Settings2 className="size-4" /></Button></div>
@@ -146,6 +217,113 @@ function Home() {
 
 
       </header>
+          <section className="mt-6 rounded-2xl border border-border bg-surface p-3">
+  <div className="flex items-center justify-between gap-2">
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={() => setWeekOffset((v) => v - 1)}
+      aria-label="Önceki hafta"
+    >
+      <ChevronLeft className="size-4" />
+    </Button>
+
+    <div className="text-center">
+      <h2 className="text-base font-bold text-fg">Haftalık Plan</h2>
+      <p className="text-[11px] text-muted">
+        {weekDays[0].toLocaleDateString("tr-TR", {
+          day: "numeric",
+          month: "short",
+        })}{" "}
+        –{" "}
+        {weekDays[6].toLocaleDateString("tr-TR", {
+          day: "numeric",
+          month: "short",
+        })}
+      </p>
+    </div>
+
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={() => setWeekOffset((v) => v + 1)}
+      aria-label="Sonraki hafta"
+    >
+      <ChevronRight className="size-4" />
+    </Button>
+  </div>
+
+  <div className="mt-3 grid grid-cols-[minmax(72px,1.5fr)_repeat(7,minmax(0,1fr))] gap-1">
+    <div className="p-1 text-[9px] font-semibold text-muted">
+      Mağaza
+    </div>
+
+    {weekDays.map((day) => {
+      const key = dateKey(day);
+      const today = key === dateKey(new Date());
+
+      return (
+        <div
+          key={key}
+          className={`rounded-lg p-1 text-center text-[9px] font-semibold ${
+            today ? "bg-amber-100 text-amber-800" : "bg-muted/40 text-muted"
+          }`}
+        >
+          <div>
+            {day.toLocaleDateString("tr-TR", { weekday: "short" })}
+          </div>
+          <div className="text-[10px]">
+            {day.getDate()}
+          </div>
+        </div>
+      );
+    })}
+
+    {ordered.map((store) => (
+      <div key={store.id} className="contents">
+        <div className="flex min-w-0 items-center rounded-lg bg-muted/30 px-1.5 py-1 text-[9px] font-semibold text-fg">
+          <span className="truncate">{store.name}</span>
+        </div>
+
+        {weekDays.map((day) => {
+          const date = dateKey(day);
+          const cell = calendarCells.get(${store.id}_${date});
+          const visited = cell?.visited ?? false;
+          const planned = Boolean(cell?.plan);
+
+          return (
+            <button
+              key={${store.id}_${date}}
+              type="button"
+              onClick={() => openCalendarCell(store.id, date)}
+              className={`min-w-0 rounded-lg border p-1 text-center transition ${
+                visited
+                  ? "border-emerald-400 bg-emerald-100"
+                  : planned
+                    ? "border-amber-300 bg-amber-50"
+                    : "border-border bg-background"
+              }`}
+            >
+              {visited ? (
+                <span className="text-sm">✓</span>
+              ) : planned ? (
+                <span className="text-sm">📝</span>
+              ) : (
+                <span className="text-xs text-muted">·</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    ))}
+  </div>
+
+  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-muted">
+    <span>🟢 Ziyaret edildi</span>
+    <span>📝 Planlandı</span>
+    <span>· Boş</span>
+  </div>
+</section>
 
 
       <section id="magazalar" className="mt-6"><div className="mb-3 flex items-center justify-between"><div><h2 className="text-base font-bold text-fg">Mağazalar</h2><p className="text-xs text-muted">Son ziyaret tarihine göre durum</p></div><button type="button" onClick={() => setAddOpen(true)} className="inline-flex items-center gap-1 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-fg"><Plus className="size-4" />Mağaza ekle</button></div>
