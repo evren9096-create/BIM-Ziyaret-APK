@@ -83,6 +83,7 @@ function Home() {
 
 
   const [renameValue, setRenameValue] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Store | null>(null);
 
 
   const calendarPlans = useAppStore((s) => s.calendarPlans);
